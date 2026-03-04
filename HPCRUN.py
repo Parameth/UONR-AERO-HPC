@@ -183,6 +183,9 @@ def setup_solver(solver, cfg):
         w.momentum(rotation_axis_origin=whl['rotation_axis_origin'])
         w.momentum(rotation_axis_direction=whl['rotation_axis_direction'])
 
+    for mrf_zone in cfg['mrf-zones']:
+        #MRF code to be added
+
     solver.solution.report_definitions.flux["mfr"] = {}
     solver.solution.report_definitions.flux["mfr"].boundaries = ["inlet", "outlet"]
     add_monitor(monitor, "mfr")
