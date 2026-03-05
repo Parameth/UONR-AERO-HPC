@@ -3,6 +3,7 @@ import configparser
 import json
 import os
 
+
 def load_config():
     ini = configparser.ConfigParser()
     ini.read(os.path.join(os.path.dirname(__file__), "sim_config.ini"))
@@ -26,6 +27,7 @@ def load_config():
         'surface_mesh_options':     json.loads(ini['surface_mesh_options']['list']),
         'boundary_layer_options':   json.loads(ini['boundary_layer_options']['list']),
         'refinement_zones':         json.loads(ini['refinement_zones']['list']),
+        'mrf_zones':                json.loads(ini['mrf-zones']['data']),
         'wheels':                   json.loads(ini['wheels']['data']),
     }
 
@@ -35,13 +37,13 @@ def load_config():
 def add_local_sizing(tasks, opts):
     tasks['Add Local Sizing'].Arguments.set_state({
         'AddChild': 'yes',
-        'ControlName': opts['name'],
-        'CurvatureNormalAngle': opts['curvature_angle'],
-        'Execution': opts['type'],
-        'FaceLabelList': opts['apply_to'],
-        'MaxSize': opts['MaxSize'],
-        'MinSize': opts['MinSize'],
-        'ZoneorLabel': 'label',
+        'BOIControlName': opts['name'],
+        'BOICurvatureNormalAngle': opts['curvature_angle'],
+        'BOIExecution': opts['type'],
+        'BOIFaceLabelList': opts['apply_to'],
+        'BOIMaxSize': opts['MaxSize'],
+        'BOIMinSize': opts['MinSize'],
+        'BOIZoneorLabel': 'label',
     })
     tasks['Add Local Sizing'].AddChildAndUpdate(DeferUpdate=False)
 
@@ -62,15 +64,22 @@ def add_refinement_box(tasks, zone):
 
 
 def add_boundary_layer(tasks, opts):
-    tasks['Add Boundary Layers'].Arguments.set_state({
+    args = {
+        'AddChild': 'yes',
         'BLControlName': opts['name'],
-        'FaceScope': {'GrowOn': 'selected-zones'},
-        'ZoneSelectionList': opts['regions'],
-        'FirstHeight': opts['first_layer_height'],
+        'FaceScope': {
+            'GrowOn': opts['grow_on'],
+            'RegionsType': opts['regions_type'],
+        },
+        'RegionScope': opts['region_scope'],
         'NumberOfLayers': opts['layers'],
-        'OffsetMethodType': opts['offset_method'],
         'TransitionRatio': opts['transition_ratio'],
-    })
+        'first_layer_height': opts['first_layer_height'],
+        'OffsetMethodType': opts['offset_method'],
+    }
+    if 'label_list' in opts:
+        args['BlLabelList'] = opts['label_list']
+    tasks['Add Boundary Layers'].Arguments.set_state(args)
     tasks['Add Boundary Layers'].AddChildAndUpdate(DeferUpdate=False)
 
 
@@ -141,6 +150,12 @@ def run_meshing(cfg):
     tasks['Describe Geometry'].UpdateChildTasks(Arguments={'v1': True}, SetupTypeChanged=True)
     tasks['Describe Geometry'].Execute()
 
+    tasks['Update Regions'].Arguments.set_state({
+        'OldRegionNameList': ['fluid', 'rear_mrf', 'front_mrf'],
+        'OldRegionTypeList': ['fluid', 'fluid', 'fluid'],
+        'RegionNameList':    ['fluid', 'rear_mrf', 'front_mrf'],
+        'RegionTypeList':    ['fluid', 'dead', 'dead'],
+    })
     tasks['Update Boundaries'].Execute()
     tasks['Update Regions'].Execute()
 
@@ -156,6 +171,8 @@ def run_meshing(cfg):
         },
     })
     tasks['Generate the Volume Mesh'].Execute()
+
+    tasks['Generate the Volume Mesh'].Execute().InsertNextTask(CommandName=r'ImproveVolumeMesh')
     tasks['Improve Volume Mesh'].Execute()
 
     return meshing.switch_to_solver()
@@ -185,13 +202,13 @@ def setup_solver(solver, cfg):
         w.momentum(rotation_axis_origin=whl['rotation_axis_origin'])
         w.momentum(rotation_axis_direction=whl['rotation_axis_direction'])
 
-    for mrf_name, mrf  in cfg['mrf-zones'].items():
+    for mrf_name, mrf_data in cfg['mrf_zones'].items():
         mrf = solver.setup.cell_zone_conditions.fluid[mrf_name]
         mrf.reference_frame.frame_motion = True
-        mrf.reference_frame(reference_frame_axis_origin = mrf['rotation_axis_origin'])
-        mrf.reference_frame(mrf_omega = mrf['omega'])
-        mrf.reference_frame(reference_frame_axis_direction = mrf['rotation_axis_direction'])
-    
+        mrf.reference_frame(reference_frame_axis_origin=mrf_data['rotation_axis_origin'])
+        mrf.reference_frame(mrf_omega=mrf_data['omega'])
+        mrf.reference_frame(reference_frame_axis_direction=mrf_data['rotation_axis_direction'])
+
     solver.solution.report_definitions.flux["mfr"] = {}
     solver.solution.report_definitions.flux["mfr"].boundaries = ["inlet", "outlet"]
     add_monitor(monitor, "mfr")
