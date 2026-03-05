@@ -35,13 +35,13 @@ def load_config():
 def add_local_sizing(tasks, opts):
     tasks['Add Local Sizing'].Arguments.set_state({
         'AddChild': 'yes',
-        'BOIControlName': opts['name'],
-        'BOICurvatureNormalAngle': opts['curvature_angle'],
-        'BOIExecution': opts['type'],
-        'BOIFaceLabelList': opts['apply_to'],
-        'BOIMaxSize': opts['MaxSize'],
-        'BOIMinSize': opts['MinSize'],
-        'BOIZoneorLabel': 'label',
+        'ControlName': opts['name'],
+        'CurvatureNormalAngle': opts['curvature_angle'],
+        'Execution': opts['type'],
+        'FaceLabelList': opts['apply_to'],
+        'MaxSize': opts['MaxSize'],
+        'MinSize': opts['MinSize'],
+        'ZoneorLabel': 'label',
     })
     tasks['Add Local Sizing'].AddChildAndUpdate(DeferUpdate=False)
 
@@ -136,6 +136,7 @@ def run_meshing(cfg):
     tasks['Describe Geometry'].Arguments.set_state({
         'NonConformal': 'No',
         'SetupType': 'The geometry consists of only fluid regions with no voids',
+        'WallToInternal': 'Yes',
     })
     tasks['Describe Geometry'].UpdateChildTasks(Arguments={'v1': True}, SetupTypeChanged=True)
     tasks['Describe Geometry'].Execute()
@@ -155,6 +156,7 @@ def run_meshing(cfg):
         },
     })
     tasks['Generate the Volume Mesh'].Execute()
+    tasks['Improve Volume Mesh'].Execute()
 
     return meshing.switch_to_solver()
 
@@ -183,9 +185,13 @@ def setup_solver(solver, cfg):
         w.momentum(rotation_axis_origin=whl['rotation_axis_origin'])
         w.momentum(rotation_axis_direction=whl['rotation_axis_direction'])
 
-    for mrf_zone in cfg['mrf-zones']:
-        #MRF code to be added
-
+    for mrf_name, mrf  in cfg['mrf-zones'].items():
+        mrf = solver.setup.cell_zone_conditions.fluid[mrf_name]
+        mrf.reference_frame.frame_motion = True
+        mrf.reference_frame(reference_frame_axis_origin = mrf['rotation_axis_origin'])
+        mrf.reference_frame(mrf_omega = mrf['omega'])
+        mrf.reference_frame(reference_frame_axis_direction = mrf['rotation_axis_direction'])
+    
     solver.solution.report_definitions.flux["mfr"] = {}
     solver.solution.report_definitions.flux["mfr"].boundaries = ["inlet", "outlet"]
     add_monitor(monitor, "mfr")

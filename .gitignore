@@ -1,0 +1,10 @@
+# CAD files
+*.pmdb
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.HPC/
