@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --time=6:00:00
+#SBATCH --time=12:00:00
 #SBATCH --job-name=FullCar
 #SBATCH --partition=defq
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=12
+#SBATCH --ntasks-per-node=16
 #SBATCH --mem=160gb
 #SBATCH --output=logs/%x-%j.out
 #SBATCH --error=logs/%x-%j.out
