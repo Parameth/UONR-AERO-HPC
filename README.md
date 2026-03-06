@@ -14,7 +14,8 @@ Jack Tandy
 To be used within the team **if** you have access to the HPC @ UoN
 
 ## Code:
-Python & Bash
+**ANSYS VERSION: 24R1**  
+Python & Bash  
 
 Refer to **requirements.txt**
 
