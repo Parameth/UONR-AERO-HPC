@@ -1,10 +1,20 @@
 # CAD files
 *.pmdb
 
+# Mesh files
+*.h5
+*.msh
+
+# Simulation results
+*.cas
+*.dat
+
 # Python
 __pycache__/
 *.pyc
 *.pyo
+HPCMESH.py
+HPCSOLVE.py
 
 # Virtual environment
 .HPC/

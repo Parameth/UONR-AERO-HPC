@@ -74,7 +74,6 @@ def add_boundary_layer(tasks, opts):
         'RegionScope': opts['region_scope'],
         'NumberOfLayers': opts['layers'],
         'TransitionRatio': opts['transition_ratio'],
-        'first_layer_height': opts['first_layer_height'],
         'OffsetMethodType': opts['offset_method'],
     }
     if 'label_list' in opts:
@@ -172,7 +171,7 @@ def run_meshing(cfg):
     })
     tasks['Generate the Volume Mesh'].Execute()
 
-    tasks['Generate the Volume Mesh'].Execute().InsertNextTask(CommandName=r'ImproveVolumeMesh')
+    tasks['Generate the Volume Mesh'].InsertNextTask(CommandName=r'ImproveVolumeMesh')
     tasks['Improve Volume Mesh'].Execute()
 
     return meshing.switch_to_solver()
