@@ -7,28 +7,30 @@ import os
 def load_config():
     ini = configparser.ConfigParser()
     ini.read(os.path.join(os.path.dirname(__file__), "sim_config.ini"))
+    mode = ini.get('config', 'mode', fallback='operations')
+    p = 'debug_' if mode == 'debug' else ''
     return {
-        'sim_name':             ini['simulation']['sim_name'],
-        'CAD_file':             ini['simulation']['CAD_file'],
-        'iterations':           ini.getint('solver', 'iterations'),
-        'processor_count':      ini.getint('solver', 'processor_count'),
-        'velocity':             ini.getfloat('solver', 'velocity'),
-        'zones':                json.loads(ini['zones']['list']),
-        'forces':               json.loads(ini['forces']['list']),
+        'sim_name':             ini[f'{p}simulation']['sim_name'],
+        'CAD_file':             ini[f'{p}simulation']['CAD_file'],
+        'iterations':           ini.getint(f'{p}solver', 'iterations'),
+        'processor_count':      ini.getint(f'{p}solver', 'processor_count'),
+        'velocity':             ini.getfloat(f'{p}solver', 'velocity'),
+        'zones':                json.loads(ini[f'{p}zones']['list']),
+        'forces':               json.loads(ini[f'{p}forces']['list']),
         'surface_mesh_global': {
-            'MaxSize':          ini.getint('surface_mesh_global', 'max_size'),
-            'MinSize':          ini.getint('surface_mesh_global', 'min_size'),
+            'MaxSize':          ini.getint(f'{p}surface_mesh_global', 'max_size'),
+            'MinSize':          ini.getint(f'{p}surface_mesh_global', 'min_size'),
         },
         'volume_mesh': {
-            'VolumeFill':               ini['volume_mesh']['volume_fill'],
-            'GrowthRate':               ini.getfloat('volume_mesh', 'growth_rate'),
-            'TetPolyMaxCellLength':     ini.getint('volume_mesh', 'tet_poly_max_cell_length'),
+            'VolumeFill':               ini[f'{p}volume_mesh']['volume_fill'],
+            'GrowthRate':               ini.getfloat(f'{p}volume_mesh', 'growth_rate'),
+            'TetPolyMaxCellLength':     ini.getint(f'{p}volume_mesh', 'tet_poly_max_cell_length'),
         },
-        'surface_mesh_options':     json.loads(ini['surface_mesh_options']['list']),
-        'boundary_layer_options':   json.loads(ini['boundary_layer_options']['list']),
-        'refinement_zones':         json.loads(ini['refinement_zones']['list']),
-        'mrf_zones':                json.loads(ini['mrf-zones']['data']),
-        'wheels':                   json.loads(ini['wheels']['data']),
+        'surface_mesh_options':     json.loads(ini[f'{p}surface_mesh_options']['list']),
+        'boundary_layer_options':   json.loads(ini[f'{p}boundary_layer_options']['list']),
+        'refinement_zones':         json.loads(ini[f'{p}refinement_zones']['list']),
+        'mrf_zones':                json.loads(ini[f'{p}mrf-zones']['data']),
+        'wheels':                   json.loads(ini[f'{p}wheels']['data']),
     }
 
 
