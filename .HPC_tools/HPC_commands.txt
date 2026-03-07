@@ -1,0 +1,88 @@
+================================================
+  LINUX & SLURM COMMAND REFERENCE
+================================================
+Basic Linux & Slurm commands to run HPC Scripts
+
+--------------------
+ LINUX BASICS
+--------------------
+
+cd
+  Change directory.
+  Examples:
+    cd /home/username        # go to specific path
+    cd ..                    # go up one level
+    cd ~                     # go to home directory
+    cd -                     # go to previous directory
+
+ls
+  List files in a directory.
+  Examples:
+    ls                       # basic list
+    ls -l                    # detailed list
+    ls -lah                  # detailed + hidden files + readable sizes
+
+mv
+  Move or rename files.
+  Examples:
+    mv old.txt new.txt        # rename
+    mv file.txt /scratch/     # move to another location
+
+cat
+  Print file contents to screen.
+  Example: cat output.log
+
+--------------------
+ SLURM COMMANDS
+--------------------
+
+sbatch
+  Submit a job script to the scheduler.
+  Returns a job ID when successful.
+  Examples:
+    sbatch job.slurm   (sbatch HPC_run.sh)
+
+squeue -u
+  Show your jobs in the queue.
+  Status codes: PD = pending, R = running, CG = completing
+  Examples:
+    squeue -u $USER    (squeue -u egypy1)             # your jobs
+    squeue -u jsmith   (squeue -u FS_FullCar)         # specific user's jobs
+    squeue -j 987654   (squeue -j 69420)              # specific job ID
+
+scancel
+  Cancel a job.
+  Examples:
+    scancel 987654            (squeue -u 69420)                   # cancel one job
+    scancel -u $USER          (scancel -u egypy1)                 # cancel ALL your jobs (be careful)
+    scancel --name=myrun      (squeue --name=FS_FullCar)          # cancel by job name
+
+sinfo
+  Show available partitions and node states.
+  Examples:
+    sinfo
+    sinfo -p gpu              (squeue -p defq)        # show GPU partition only
+
+    # Note for 'nodes':
+    # defq   (<14days)      -           long run
+    # shortq (<30mins)      -           quick solves / testing scripts
+
+--------------------
+ EXAMPLE SBATCH SCRIPT
+--------------------
+
+#!/bin/bash
+#SBATCH --job-name=my_job
+#SBATCH --output=slurm-%j.out
+#SBATCH --error=slurm-%j.err
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16gb
+#SBATCH --time=02:00:00 (HH:MM:SS)
+#SBATCH --partition=compute
+
+python my_script.py
+
+Note: %j in output filenames is replaced automatically with the job ID.
+
+================================================
