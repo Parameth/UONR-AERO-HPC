@@ -8,7 +8,7 @@ file_name = "INSERT FILE NAME HERE"  # e.g. "Wheel-Dev-001.cas"
 # --- Solver ---
 solver = pyfluent.launch_fluent(mode='solver', precision='double', processor_count=16)
 
-solver.file.read_case("path/to/case_file.cas")
+solver.file.read_case(file_name=file_name)
 solver.solution.initialization.hybrid_initialize()
 solver.solution.run_calculation.iterate(iter_count=iterations)
 
