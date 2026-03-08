@@ -1,5 +1,5 @@
 # CAD files
-*.pmdb
+test_CAD.pmdb
 
 # Mesh files
 *.h5

@@ -1,0 +1,15 @@
+# Fluent Outputs
+*.bat
+*.log
+*.trn
+
+# Result Files
+*.cas.h5
+*.dat.h5
+
+# CAD Files
+*.stp
+*.step
+
+# Misc Files
+*.logamgx

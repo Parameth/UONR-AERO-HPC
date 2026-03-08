@@ -1,0 +1,39 @@
+# Isolated Test Cases
+
+This directory contains isolated simulation cases used to test specific functions and features
+of the main CFD code with smaller, more manageable geometries. By running these reduced cases,
+individual solver features, boundary conditions, and meshing strategies can be validated
+independently before being applied to the full car simulation.
+
+---
+
+## Possible Isolated Cases
+
+### 1. Wheel - MRF + Rotating Wall
+
+Geometry: Single wheel (no car body)
+Purpose: Verify methods for MRF (Multiple Reference Frame) zone for wheel internal flow
+and moving rotational wall boundary conditions on the tyre surface.
+
+Features:
+-MRF
+-Moving walls (Translational & Rotational)
+-Boundary layers
+-Multizone domains (MRF & Fluid Domain)
+-Mutliple refinement zones (BOIs)
+
+Functions to test:
+
+Status: IN PROGRESS
+
+### 2. Wing 
+Geometry: 
+
+
+Features
+
+
+Functions to test:
+
+
+Status: TODO
