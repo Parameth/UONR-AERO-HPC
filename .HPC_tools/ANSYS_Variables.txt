@@ -1,0 +1,147 @@
+# ANSYS Fluent Export Variables Reference
+# ==========================================
+
+# --- PRESSURE ---
+pressure                    # Static pressure
+pressure-coefficient        # Pressure coefficient (Cp)
+dynamic-pressure            # Dynamic pressure (0.5 * rho * v^2)
+absolute-pressure           # Absolute pressure
+total-pressure              # Total (stagnation) pressure
+rel-total-pressure          # Relative total pressure (rotating frames)
+
+# --- DENSITY ---
+density                     # Fluid density
+density-all                 # Density (all phases)
+
+# --- VELOCITY ---
+velocity-magnitude          # Velocity magnitude
+x-velocity                  # Velocity component in X
+y-velocity                  # Velocity component in Y
+z-velocity                  # Velocity component in Z
+axial-velocity              # Axial velocity component
+radial-velocity             # Radial velocity component
+tangential-velocity         # Tangential velocity component
+velocity-angle              # Flow angle of velocity vector
+
+# --- RELATIVE VELOCITY (Rotating Reference Frame) ---
+rel-velocity-magnitude      # Relative velocity magnitude
+relative-x-velocity         # Relative velocity in X
+relative-y-velocity         # Relative velocity in Y
+relative-z-velocity         # Relative velocity in Z
+rel-axial-velocity          # Relative axial velocity
+rel-radial-velocity         # Relative radial velocity
+rel-tangential-velocity     # Relative tangential velocity
+relative-velocity-angle     # Flow angle of relative velocity vector
+
+# --- MESH VELOCITY ---
+mesh-x-velocity             # Mesh velocity in X (dynamic mesh)
+mesh-y-velocity             # Mesh velocity in Y (dynamic mesh)
+mesh-z-velocity             # Mesh velocity in Z (dynamic mesh)
+
+# --- VORTICITY & ROTATION ---
+vorticity-mag               # Vorticity magnitude
+helicity                    # Helicity (v . omega)
+x-vorticity                 # Vorticity component in X
+y-vorticity                 # Vorticity component in Y
+z-vorticity                 # Vorticity component in Z
+
+# --- FLOW CRITERIA ---
+q-criterion                 # Q-criterion (vortex identification)
+raw-q-criterion             # Raw Q-criterion (unfiltered)
+lambda2-criterion           # Lambda-2 criterion (vortex core)
+cell-reynolds-number        # Local cell Reynolds number
+cell-convective-courant-number  # Convective Courant number
+
+# --- TURBULENCE ---
+turb-kinetic-energy         # Turbulent kinetic energy (k)
+turb-intensity              # Turbulence intensity (%)
+turb-diss-rate              # Turbulent dissipation rate (epsilon)
+specific-diss-rate          # Specific dissipation rate (omega, k-omega models)
+production-of-k             # Production of turbulent kinetic energy
+turb-reynolds-number-rey    # Turbulent Reynolds number (Re_y)
+
+# --- VISCOSITY ---
+viscosity-lam               # Laminar (molecular) viscosity
+viscosity-turb              # Turbulent (eddy) viscosity
+viscosity-eff               # Effective viscosity (lam + turb)
+viscosity-ratio             # Turbulent-to-laminar viscosity ratio
+y-star                      # Dimensionless wall distance (y*)
+y-plus                      # Dimensionless wall distance (y+)
+
+# --- WALL QUANTITIES ---
+wall-shear                  # Wall shear stress magnitude
+x-wall-shear                # Wall shear stress in X
+y-wall-shear                # Wall shear stress in Y
+z-wall-shear                # Wall shear stress in Z
+skin-friction-coef          # Skin friction coefficient (Cf)
+
+# --- CELL / MESH PROPERTIES ---
+cell-partition-active       # Active cell partition (parallel)
+cell-partition-stored       # Stored cell partition index
+cell-id                     # Cell ID
+cell-element-type           # Cell element type (hex, tet, etc.)
+cell-type                   # Cell type flag
+cell-zone                   # Cell zone ID
+partition-neighbors         # Number of partition neighbours
+cell-weight                 # Cell weight (adaption)
+cell-volume                 # Cell volume
+
+# --- COORDINATES ---
+x-coordinate                # Cell centroid X coordinate
+y-coordinate                # Cell centroid Y coordinate
+z-coordinate                # Cell centroid Z coordinate
+axial-coordinate            # Axial coordinate
+angular-coordinate          # Angular coordinate
+abs-angular-coordinate      # Absolute angular coordinate
+radial-coordinate           # Radial coordinate
+
+# --- FACE AREAS ---
+face-area-magnitude         # Face area magnitude
+x-face-area                 # Face area component in X
+y-face-area                 # Face area component in Y
+z-face-area                 # Face area component in Z
+
+# --- MESH QUALITY ---
+orthogonal-quality          # Orthogonal quality (0-1, 1 = best)
+cell-equiangle-skew         # Equiangle skewness (0 = best)
+cell-equivolume-skew        # Equivolume skewness (0 = best)
+face-handedness             # Face handedness (mesh orientation check)
+mark-poor-elements          # Flag for poor quality elements
+interface-overlap-fraction  # Overlap fraction at mesh interfaces
+aspect-ratio                # Cell aspect ratio
+
+# --- MESH ADAPTION ---
+cell-wall-distance          # Distance from cell to nearest wall
+cell-refine-level           # Cell refinement level
+smoothed-cell-refine-level  # Smoothed refinement level
+cell-parent-index           # Parent cell index (adapted meshes)
+anisotropic-adaption-cells  # Anisotropic adaption flag
+boundary-layer-cells        # Boundary layer cell flag
+boundary-cell-dist          # Distance to boundary cell
+boundary-normal-dist        # Normal distance to boundary
+boundary-volume-dist        # Volume-weighted distance to boundary
+cell-volume-change          # Cell volume change rate
+mass-imbalance              # Cell mass imbalance
+
+# --- VELOCITY GRADIENTS ---
+strain-rate-mag             # Strain rate magnitude
+dx-velocity-dx              # dU/dx
+dy-velocity-dx              # dV/dx
+dz-velocity-dx              # dW/dx
+dx-velocity-dy              # dU/dy
+dy-velocity-dy              # dV/dy
+dz-velocity-dy              # dW/dy
+dx-velocity-dz              # dU/dz
+dy-velocity-dz              # dV/dz
+dz-velocity-dz              # dW/dz
+
+# --- PRESSURE GRADIENTS ---
+dp-dx                       # Pressure gradient dP/dx
+dp-dy                       # Pressure gradient dP/dy
+dp-dz                       # Pressure gradient dP/dz
+pressure-hessian-indicator  # Pressure Hessian adaption indicator
+
+# --- WALL TEMPERATURE ---
+wall-temp-out-surf          # Outer surface wall temperature
+wall-temp-in-surf           # Inner surface wall temperature
+
