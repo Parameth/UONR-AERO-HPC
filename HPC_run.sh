@@ -20,16 +20,20 @@ echo "### Starting at: $(date) ###"
 module load ansys-uon/2024R1
 module load openmpi-uoneasy/4.1.6-GCC-13.2.0
 module load python-uoneasy/3.11.5-GCCcore-13.2.0
+module load paraview-uoneasy/5.13.2-foss-2023a-UCX-1.15.0 
  
 # Define Fluent environment
 export AWP_ROOT241='/gpfs01/software/ansys_inc/v241'
 
-python -m venv HPC_env
-source HPC_env/bin/activate
+python -m venv ansys
+source ansys/bin/activate
 pip install ansys.fluent.core
 pip install opencv-python	
+pip install tqdm
  
-source HPC_env/bin/activate
-python HPCRUN.py > log 2>&1
+source ansys/bin/activate
+python HPCRUN.py > log_run 2>&1
+
+pvbatch HPCPOST.py > log_post 2>&1
  
 echo "### Ending at: $(date) ###"

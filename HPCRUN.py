@@ -2,6 +2,9 @@ import ansys.fluent.core as pyfluent
 import configparser
 import json
 import os
+import shutil
+import subprocess
+from pathlib import Path
 
 
 def load_config():
@@ -31,6 +34,8 @@ def load_config():
         'refinement_zones':         json.loads(ini[f'{p}refinement_zones']['list']),
         'mrf_zones':                json.loads(ini[f'{p}mrf-zones']['data']),
         'wheels':                   json.loads(ini[f'{p}wheels']['data']),
+        'pvpython_path':            ini.get(f'{p}postpro', 'pvpython_path', fallback='pvpython'),
+        'run_postpro':              ini.getboolean(f'{p}postpro', 'enabled', fallback=True),
     }
 
 
@@ -109,7 +114,7 @@ def add_force_report(solver, monitor, name, force_vec, zones):
 
 def run_meshing(cfg):
     meshing = pyfluent.launch_fluent(
-        mode='meshing', precision='double', processor_count=cfg['processor_count']
+        mode='meshing', precision='double', processor_count=cfg['processor_count'],
     )
     workflow = meshing.workflow
     workflow.InitializeWorkflow(WorkflowType='Watertight Geometry')
@@ -228,18 +233,29 @@ def setup_solver(solver, cfg):
 
 def save_results(solver, cfg):
     sim_name = cfg['sim_name']
+    out_dir  = Path.cwd() / sim_name
+    out_dir.mkdir(exist_ok=True)
     graphics = solver.results.graphics
-    monitor = solver.solution.monitor
+    monitor  = solver.solution.monitor
 
-    solver.file.write(file_type="case", file_name=f"{sim_name}-1k.cas")
-    solver.file.write(file_type="data", file_name=f"{sim_name}-1k.dat")
+    for out_file in Path.cwd().glob("*.out"):
+        shutil.move(str(out_file), str(out_dir / out_file.name))
+
+    solver.file.write(file_type="case", file_name=str(out_dir / f"{sim_name}-1k.cas"))
+    solver.file.write(file_type="data", file_name=str(out_dir / f"{sim_name}-1k.dat"))
+
+    solver.file.export.ensight_gold(
+        cellzones=['solid', 'fluid', 'fluid_1'],
+        cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag'],
+        file_name=str(out_dir / sim_name),
+    )
 
     monitor.residual.plot()
-    graphics.picture.save_picture(file_name=f"{sim_name}-residuals-plot.png")
+    graphics.picture.save_picture(file_name=str(out_dir / f"{sim_name}-residuals-plot.png"))
 
     for name in [f[0] for f in cfg['forces']] + ["mfr"]:
         monitor.report_plots[name].plot()
-        graphics.picture.save_picture(file_name=f"{sim_name}-{name}-plot.png")
+        graphics.picture.save_picture(file_name=str(out_dir / f"{sim_name}-{name}-plot.png"))
 
 
 def main():
@@ -252,7 +268,6 @@ def main():
         save_results(solver, cfg)
     finally:
         solver.exit()
-
 
 if __name__ == "__main__":
     main()

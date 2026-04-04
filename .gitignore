@@ -15,9 +15,14 @@ __pycache__/
 *.pyo
 HPCMESH.py
 HPCSOLVE.py
+BaseImagesHPC.py
+DeltaSourceHPC.py
 
 # Virtual environment
 .HPC/
 
 # Results
 .results/
+
+# Misc
+.claude
