@@ -13,7 +13,7 @@ _Describe the issue clearly. What did you expect vs. what actually occurred?_
 ## Where did it fail?
 
 - [ ] `HPC_run.sh` (SLURM / environment setup)
-- [ ] `HPCRUN.py` (main pipeline / meshing)
+- [ ] `HPCRUN.py` (main pipeline / meshing / solving)
 - [ ] `HPCPOST.py` (ParaView post-processing)
 - [ ] `sim_config.ini` (configuration parsing)
 - [ ] Other: ___
