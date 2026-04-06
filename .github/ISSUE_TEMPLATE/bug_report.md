@@ -1,38 +1,51 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
+name: Bug Report
+about: Where it broke (DELETE as appropriate) — PIPELINE/MESHING/SOLVER/POSTPRO
+title: "[BUG] <short description>"
 labels: bug
-assignees: ''
-
+assignees: Parameth
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## What happened?
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+_Describe the issue clearly. What did you expect vs. what actually occurred?_
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Where did it fail?
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+- [ ] `HPC_run.sh` (SLURM / environment setup)
+- [ ] `HPCRUN.py` (main pipeline / meshing)
+- [ ] `HPCPOST.py` (ParaView post-processing)
+- [ ] `sim_config.ini` (configuration parsing)
+- [ ] Other: ___
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+## Steps to reproduce
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+1. 
+2. 
+3. 
 
-**Additional context**
-Add any other context about the problem here.
+## Relevant `sim_config.ini` settings
+
+```ini
+# Paste the relevant section(s) here — redact anything sensitive
+```
+
+## Error output / log snippet
+
+```
+# Paste from logs/<job-name>-<job-id>.out or log_run / log_post
+```
+
+## Environment
+
+| Field | Value |
+|---|---|
+| Script version | e.g. V1.2.0 |
+| ANSYS version | e.g. 24R1 |
+| HPC partition | e.g. defq |
+| Python version | e.g. 3.10 |
+| Run mode | `operations` / `debug` |
+
+## Anything else?
+
+_CAD file name, mesh size, processor count, anything unusual about this run._
