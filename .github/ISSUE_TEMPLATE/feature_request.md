@@ -1,20 +1,37 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
-
+name: Feature Request
+about: Suggest a new capability, improvement, or workflow addition
+title: "[FEATURE] <short description>"
+labels: enhancement
+assignees: Parameth
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## What do you want added or changed?
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+_Be specific. "Better meshing" is not enough — "Add per-component curvature angle override in sim_config.ini" is._
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Why is this needed?
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+_What problem does it solve? How does it affect your current workflow?_
+
+## Proposed approach (optional)
+
+_If you have an idea of how it could be implemented, sketch it out here. Code snippets welcome._
+
+## Which part of the pipeline does this touch?
+
+- [ ] SLURM / job submission (`HPC_run.sh`)
+- [ ] Meshing + Solving (`HPCRUN.py`)
+- [ ] Post-processing (`HPCPOST.py`)
+- [ ] Configuration (`sim_config.ini`)
+- [ ] New file / module
+
+## Priority (your honest take)
+
+- [ ] Nice to have
+- [ ] Would noticeably improve workflow
+- [ ] Blocking — can't do X without this
+
+## Anything else?
+
+_Reference papers, ParaView docs, PyFluent API links, whatever is relevant._
