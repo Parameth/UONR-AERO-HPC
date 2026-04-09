@@ -131,4 +131,51 @@ Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_s
 
 ---
 
+## New Releases
+
+---
+
+### V1.2.0 — 04/04/26
+
+#### MRF & Wheel Rotation
+- Added MRF wheel internals support — rotating zone definitions via `[mrf-zones]` config section
+- Added per-wheel wall rotation boundary conditions (axis origin, direction, and omega)
+- Added `Wheels_MRF` debug/test simulation configs for MRF validation
+
+#### Post-Processing
+- Expanded `[postpro]` config — configurable slice sweep ranges and colour map limits for Cp/vorticity
+
+#### Configuration
+- Extended `sim_config.ini` with `debug_` profile mirroring for all key sections
+
+---
+
+### V1.1.0
+
+#### MRF Solver
+- MRF meshing and solving pipeline fully functional
+- Added MRF function and config options via `[mrf-zones]`
+- Solver hand-off from meshing to solver session within a single Fluent process (no intermediate file I/O)
+
+---
+
+### V1.0.0 — Initial Release
+
+#### Pipeline
+- End-to-end SLURM pipeline: geometry import → watertight meshing → Fluent solve
+- `HPC_run.sh` SLURM job script with module loading and virtual environment setup
+- INI-based configuration via `sim_config.ini` supporting `operations` and `debug` profiles
+
+#### Meshing
+- Automated watertight geometry workflow (surface mesh, volume mesh, surface mesh improvement)
+- Boundary layer generation with configurable first layer height, layer count, and transition ratio
+- Body of Influence (BOI) refinement zones with bounding-box coordinates
+- Per-component local surface sizing controls
+
+#### Solver & Monitoring
+- Boundary condition setup — velocity inlet, shear walls, moving ground plane, rotating wheel walls
+- Force & flux monitors for drag, lift, and side-force globally and split per aero zone
+
+---
+
 ## Last Updated 04/04/26

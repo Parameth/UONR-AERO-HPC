@@ -12,8 +12,12 @@ def load_config():
     ini.read(os.path.join(os.path.dirname(__file__), "sim_config.ini"))
     mode = ini.get('config', 'mode', fallback='operations')
     p = 'debug_' if mode == 'debug' else ''
+    initials = ini[f'{p}simulation']['user_initials']
+    sim_date = ini[f'{p}simulation']['sim_date']
+    sim_num  = ini[f'{p}simulation']['sim_number']
+    sim_name = f"{initials}-{sim_date}-{sim_num}"
     return {
-        'sim_name':             ini[f'{p}simulation']['sim_name'],
+        'sim_name':             sim_name,
         'CAD_file':             ini[f'{p}simulation']['CAD_file'],
         'iterations':           ini.getint(f'{p}solver', 'iterations'),
         'processor_count':      ini.getint(f'{p}solver', 'processor_count'),
@@ -108,6 +112,9 @@ def add_force_report(solver, monitor, name, force_vec, zones):
     f(average_over=10)
     f(retain_instantaneous_values=True)
     add_monitor(monitor, name)
+
+
+# --- Fluent Post helpers ---
 
 
 # --- Main stages ---
@@ -232,9 +239,13 @@ def setup_solver(solver, cfg):
 
 
 def save_results(solver, cfg):
-    sim_name = cfg['sim_name']
-    out_dir  = Path.cwd() / sim_name
+    sim_name    = cfg['sim_name']
+    out_dir     = Path.cwd() / sim_name
+    plots_dir   = out_dir / "plots"
+    ensight_dir = out_dir / "ensight"
     out_dir.mkdir(exist_ok=True)
+    plots_dir.mkdir(exist_ok=True)
+    ensight_dir.mkdir(exist_ok=True)
     graphics = solver.results.graphics
     monitor  = solver.solution.monitor
 
@@ -247,15 +258,15 @@ def save_results(solver, cfg):
     solver.file.export.ensight_gold(
         cellzones=['solid', 'fluid', 'fluid_1'],
         cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag'],
-        file_name=str(out_dir / sim_name),
+        file_name=str(ensight_dir / sim_name),
     )
 
     monitor.residual.plot()
-    graphics.picture.save_picture(file_name=str(out_dir / f"{sim_name}-residuals-plot.png"))
+    graphics.picture.save_picture(file_name=str(plots_dir / f"{sim_name}-residuals-plot.png"))
 
     for name in [f[0] for f in cfg['forces']] + ["mfr"]:
         monitor.report_plots[name].plot()
-        graphics.picture.save_picture(file_name=str(out_dir / f"{sim_name}-{name}-plot.png"))
+        graphics.picture.save_picture(file_name=str(plots_dir / f"{sim_name}-{name}-plot.png"))
 
 
 def main():
