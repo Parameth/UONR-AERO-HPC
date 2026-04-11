@@ -3,7 +3,6 @@ import configparser
 import json
 import os
 import shutil
-import subprocess
 from pathlib import Path
 
 
@@ -245,7 +244,7 @@ def save_results(solver, cfg):
     solver.file.write(file_type="data", file_name=str(out_dir / f"{sim_name}-1k.dat"))
 
     solver.file.export.ensight_gold(
-        cellzones=['solid', 'fluid', 'fluid_1'],
+        cellzones=['domain', 'mrf'],
         cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag'],
         file_name=str(out_dir / sim_name),
     )
