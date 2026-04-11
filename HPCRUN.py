@@ -156,10 +156,10 @@ def run_meshing(cfg):
     tasks['Describe Geometry'].Execute()
 
     tasks['Update Regions'].Arguments.set_state({
-        'OldRegionNameList': ['fluid', 'rear_mrf', 'front_mrf'],
-        'OldRegionTypeList': ['fluid', 'fluid', 'fluid'],
-        'RegionNameList':    ['fluid', 'rear_mrf', 'front_mrf'],
-        'RegionTypeList':    ['fluid', 'dead', 'dead'],
+        'OldRegionNameList': ['domain', 'mrf'],
+        'OldRegionTypeList': ['fluid', 'dead'],
+        'RegionNameList':    ['domain', 'mrf'],
+        'RegionTypeList':    ['fluid', 'fluid'],
     })
     tasks['Update Boundaries'].Execute()
     tasks['Update Regions'].Execute()
