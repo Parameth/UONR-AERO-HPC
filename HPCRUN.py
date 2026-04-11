@@ -40,6 +40,9 @@ def load_config():
         'wheels':                   json.loads(ini[f'{p}wheels']['data']),
         'pvpython_path':            ini.get(f'{p}postpro', 'pvpython_path', fallback='pvpython'),
         'run_postpro':              ini.getboolean(f'{p}postpro', 'enabled', fallback=True),
+        'tyre_radius':              ini.getfloat(f'{p}vehicle', 'tyre_radius'),
+        'wheelbase':                ini.getfloat(f'{p}vehicle', 'wheelbase'),
+        'moment_center':            json.loads(ini[f'{p}vehicle']['moment_center']),
     }
 
 
@@ -115,6 +118,42 @@ def add_force_report(solver, monitor, name, force_vec, zones):
 
 
 # --- Fluent Post helpers ---
+
+def compute_aero_coefficients(solver, cfg, rho=1.225):
+    velocity = cfg['velocity']
+    zones    = cfg['zones']
+    forces   = [tuple(f) for f in cfg['forces']]
+    q        = 0.5 * rho * velocity**2
+
+    frontal_areas = []
+    CL_list       = []
+    CD_list       = []
+    CS_list       = []
+
+    for z in zones:
+        area = solver.results.report.projected_surface_area(
+            surfaces=[z], min_feature_size=0.01, proj_plane_norm_comp=[1, 0, 0]
+        )
+        frontal_areas.append((z, area))
+
+        zone_cl = zone_cd = zone_cs = None
+
+        for force_name, force_vec in forces:
+            report_name = f"{force_name}-{z}"
+            force_val   = solver.solution.report_definitions.force[report_name].compute()
+
+            if force_vec[2] != 0:    # Z component → Lift
+                zone_cl = force_val / (q * area)
+            elif force_vec[0] != 0:  # X component → Drag
+                zone_cd = force_val / (q * area)
+            elif force_vec[1] != 0:  # Y component → Side
+                zone_cs = force_val / (q * area)
+
+        CL_list.append((z, zone_cl))
+        CD_list.append((z, zone_cd))
+        CS_list.append((z, zone_cs))
+
+    return frontal_areas, CL_list, CD_list, CS_list
 
 
 # --- Main stages ---
@@ -235,10 +274,111 @@ def setup_solver(solver, cfg):
         for force_name, force_vec in forces:
             add_force_report(solver, monitor, f"{force_name}-{z}", force_vec, [z])
 
+    solver.solution.report_definitions.moment["rear_moment"] = {}
+    rm = solver.solution.report_definitions.moment["rear_moment"]
+    rm.zones = zones
+    rm(mom_axis=[0, 1, 0])
+    rm(mom_center=cfg['moment_center'])
+    rm(average_over=10)
+    rm(retain_instantaneous_values=True)
+    add_monitor(monitor, "rear_moment")
+
     solver.setup.reference_values.velocity.set_state(velocity)
 
 
-def save_results(solver, cfg):
+def run_fluent_post(solver, cfg):
+    frontal_areas, CL_list, CD_list, CS_list = compute_aero_coefficients(solver, cfg)
+
+    forces    = [tuple(f) for f in cfg['forces']]
+    wheelbase = cfg['wheelbase']
+
+    downforce_name  = next(name for name, vec in forces if vec[2] != 0)
+    total_downforce = solver.solution.report_definitions.force[downforce_name].compute()
+    rear_moment_val = solver.solution.report_definitions.moment["rear_moment"].compute()
+
+    front_downforce = rear_moment_val / wheelbase
+    rear_downforce  = total_downforce - front_downforce
+    aero_balance    = front_downforce / total_downforce if total_downforce != 0 else 0
+
+    return frontal_areas, CL_list, CD_list, CS_list, front_downforce, rear_downforce, aero_balance
+
+
+def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_downforce, rear_downforce, aero_balance):
+    import datetime
+    sim_name = cfg['sim_name']
+    velocity = cfg['velocity']
+    zones    = cfg['zones']
+    forces   = [tuple(f) for f in cfg['forces']]
+    rho      = 1.225
+    q        = 0.5 * rho * velocity**2
+    out_dir  = Path.cwd() / sim_name
+    out_dir.mkdir(exist_ok=True)
+
+    all_surfaces = zones + list(cfg['wheels'].keys())
+    total_area = solver.results.report.projected_surface_area(
+        surfaces=all_surfaces, min_feature_size=0.01, proj_plane_norm_comp=[1, 0, 0]
+    )
+
+    total_forces = {
+        name: solver.solution.report_definitions.force[name].compute()
+        for name, _ in forces
+    }
+
+    coeff_labels = {0: "CD", 1: "CS", 2: "CL"}
+    fmt = lambda v: f"{v:>8.4f}" if v is not None else f"{'N/A':>8}"
+
+    total_rows = "\n".join(
+        f"  {name:<14} {total_forces[name]:>10.3f} N    {coeff_labels[next(i for i,v in enumerate(vec) if v != 0)]}: {total_forces[name] / (q * total_area):>8.4f}"
+        for name, vec in forces
+    )
+    zone_rows = "\n".join(
+        f"  {z:<12} | {frontal_areas[i][1]:>9.4f} | {fmt(CL_list[i][1])} | {fmt(CD_list[i][1])} | {fmt(CS_list[i][1])}"
+        for i, z in enumerate(zones)
+    )
+    sum_area = sum(frontal_areas[i][1] for i in range(len(zones)))
+    sum_cl   = sum(CL_list[i][1] for i in range(len(zones)) if CL_list[i][1] is not None)
+    sum_cd   = sum(CD_list[i][1] for i in range(len(zones)) if CD_list[i][1] is not None)
+    sum_cs   = sum(CS_list[i][1] for i in range(len(zones)) if CS_list[i][1] is not None)
+    zone_total = f"  {'TOTAL':<12} | {sum_area:>9.4f} | {sum_cl:>8.4f} | {sum_cd:>8.4f} | {sum_cs:>8.4f}"
+
+    report = f"""\
+=======================================================
+  SIMULATION RESULTS: {sim_name}
+=======================================================
+  Date:        {datetime.date.today().strftime('%d/%m/%Y')}
+  Velocity:    {velocity} m/s
+  Iterations:  {cfg['iterations']}
+  Zones:       {', '.join(zones)}
+  Air Density: {rho} kg/m³
+  Dyn Press:   {q:.2f} Pa
+
+-------------------------------------------------------
+  TOTAL (ALL ZONES)
+-------------------------------------------------------
+{total_rows}
+
+-------------------------------------------------------
+  PER-ZONE BREAKDOWN
+-------------------------------------------------------
+  {'Zone':<12} | {'Area (m²)':>9} | {'CL':>8} | {'CD':>8} | {'CS':>8}
+  {'─' * 52}
+{zone_rows}
+  {'─' * 52}
+{zone_total}
+
+-------------------------------------------------------
+  AERO BALANCE
+-------------------------------------------------------
+  Front Downforce: {front_downforce:>10.3f} N
+  Rear Downforce:  {rear_downforce:>10.3f} N
+  Aero Balance:    {aero_balance * 100:>9.2f} % front
+=======================================================
+"""
+
+    (out_dir / f"{sim_name}-results.txt").write_text(report)
+
+
+def move_results(solver, cfg):
     sim_name    = cfg['sim_name']
     out_dir     = Path.cwd() / sim_name
     plots_dir   = out_dir / "plots"
@@ -276,9 +416,12 @@ def main():
         setup_solver(solver, cfg)
         solver.solution.initialization.hybrid_initialize()
         solver.solution.run_calculation.iterate(iter_count=cfg['iterations'])
-        save_results(solver, cfg)
+        frontal_areas, CL_list, CD_list, CS_list, front_df, rear_df, aero_bal = run_fluent_post(solver, cfg)
+        results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_df, rear_df, aero_bal)
+        move_results(solver, cfg)
     finally:
         solver.exit()
+
 
 if __name__ == "__main__":
     main()
