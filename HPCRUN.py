@@ -1,6 +1,5 @@
 import ansys.fluent.core as pyfluent
 import configparser
-import csv
 import json
 import os
 import shutil
@@ -123,16 +122,21 @@ def add_force_report(solver, monitor, name, force_vec, zones):
 # --- Fluent Post helpers ---
 
 def calc_zy_projected_area(filepath: str) -> float:
-    """Read a Fluent ASCII surface export and return the ZY projected area
-    using the convex hull of the (y, z) node coordinates."""
+    """Return ZY projected area from a Fluent ASCII surface export.
+    Reads (y, z) node coordinates, computes convex hull area, then
+    doubles for half-model symmetry."""
     yz_points = []
     with open(filepath, newline='') as f:
-        reader  = csv.reader(f)
-        headers = [h.strip() for h in next(reader)]
-        y_idx   = headers.index('y-coordinate')
-        z_idx   = headers.index('z-coordinate')
-        for row in reader:
-            yz_points.append((float(row[y_idx]), float(row[z_idx])))
+        header_line = f.readline()
+        headers     = header_line.split()
+        headers_lc  = [h.lower() for h in headers]
+        y_idx       = next(i for i, h in enumerate(headers_lc) if 'y' in h and 'coord' in h)
+        z_idx       = next(i for i, h in enumerate(headers_lc) if 'z' in h and 'coord' in h)
+        for line in f:
+            parts = line.split()
+            if len(parts) < max(y_idx, z_idx) + 1:
+                continue
+            yz_points.append((float(parts[y_idx]), float(parts[z_idx])))
 
     pts  = np.array(yz_points)
     hull = ConvexHull(pts)
@@ -150,8 +154,7 @@ def compute_aero_coefficients(solver, cfg, rho=1.225):
     for s in all_surfaces:
         solver.file.export.ascii(
             file_name         = str(Path.cwd() / f"{s}_area_coords"),
-            surface_name_list = [s],
-            cell_func_domain  = ["z-coordinate", "y-coordinate"],
+            surface_name_list = [s]
         )
 
     areas = {
