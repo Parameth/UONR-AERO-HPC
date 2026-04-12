@@ -132,7 +132,7 @@ def compute_aero_coefficients(solver, cfg, rho=1.225):
 
     for z in zones:
         area = solver.results.report.projected_surface_area(
-            surfaces=[z], min_feature_size=0.01, proj_plane_norm_comp=[1, 0, 0]
+            surfaces=[z], min_feature_size=0.001, proj_plane_norm_comp=[1, 0, 0]
         )
         frontal_areas.append((z, area))
 
@@ -203,10 +203,10 @@ def run_meshing(cfg):
     tasks['Describe Geometry'].Execute()
 
     tasks['Update Regions'].Arguments.set_state({
-        'OldRegionNameList': ['fluid', 'rear_mrf', 'front_mrf'],
-        'OldRegionTypeList': ['fluid', 'fluid', 'fluid'],
-        'RegionNameList':    ['fluid', 'rear_mrf', 'front_mrf'],
-        'RegionTypeList':    ['fluid', 'dead', 'dead'],
+        'OldRegionNameList': ['domain', 'mrf'],
+        'OldRegionTypeList': ['fluid', 'dead'],
+        'RegionNameList':    ['domain', 'mrf'],
+        'RegionTypeList':    ['fluid', 'fluid'],
     })
     tasks['Update Boundaries'].Execute()
     tasks['Update Regions'].Execute()
@@ -274,15 +274,15 @@ def setup_solver(solver, cfg):
         for force_name, force_vec in forces:
             add_force_report(solver, monitor, f"{force_name}-{z}", force_vec, [z])
 
-    solver.solution.report_definitions.moment["rear_moment"] = {}
-    rm = solver.solution.report_definitions.moment["rear_moment"]
+    solver.solution.report_definitions.moment["aero_balance_moment"] = {}
+    rm = solver.solution.report_definitions.moment["aero_balance_moment"]
     rm.zones = zones
     rm(mom_axis=[0, 1, 0])
+    rm(report_output_type = "Moment")
     rm(mom_center=cfg['moment_center'])
     rm(average_over=10)
     rm(retain_instantaneous_values=True)
-    add_monitor(monitor, "rear_moment")
-
+    
     solver.setup.reference_values.velocity.set_state(velocity)
 
 
@@ -294,7 +294,7 @@ def run_fluent_post(solver, cfg):
 
     downforce_name  = next(name for name, vec in forces if vec[2] != 0)
     total_downforce = solver.solution.report_definitions.force[downforce_name].compute()
-    rear_moment_val = solver.solution.report_definitions.moment["rear_moment"].compute()
+    rear_moment_val = solver.solution.report_definitions.moment["aero_balance_moment"].compute()
 
     front_downforce = rear_moment_val / wheelbase
     rear_downforce  = total_downforce - front_downforce
@@ -396,9 +396,9 @@ def move_results(solver, cfg):
     solver.file.write(file_type="data", file_name=str(out_dir / f"{sim_name}-1k.dat"))
 
     solver.file.export.ensight_gold(
-        cellzones=['solid', 'fluid', 'fluid_1'],
+        cellzones=['domain', 'mrf'],
         cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag'],
-        file_name=str(ensight_dir / sim_name),
+        file_name=str(out_dir / sim_name),
     )
 
     monitor.residual.plot()
