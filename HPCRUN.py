@@ -153,7 +153,7 @@ def compute_aero_coefficients(solver, cfg, rho=1.225):
         CD_list.append((z, zone_cd))
         CS_list.append((z, zone_cs))
 
-    return frontal_areas, CL_list, CD_list, CS_list
+    return frontal_areas, CL_list, CD_list, CS_list, q
 
 
 # --- Main stages ---
@@ -278,7 +278,6 @@ def setup_solver(solver, cfg):
     rm = solver.solution.report_definitions.moment["aero_balance_moment"]
     rm.zones = zones
     rm(mom_axis=[0, 1, 0])
-    rm(report_output_type = "Moment")
     rm(mom_center=cfg['moment_center'])
     rm(average_over=10)
     rm(retain_instantaneous_values=True)
@@ -287,14 +286,15 @@ def setup_solver(solver, cfg):
 
 
 def run_fluent_post(solver, cfg):
-    frontal_areas, CL_list, CD_list, CS_list = compute_aero_coefficients(solver, cfg)
+    frontal_areas, CL_list, CD_list, CS_list, q = compute_aero_coefficients(solver, cfg)
 
     forces    = [tuple(f) for f in cfg['forces']]
     wheelbase = cfg['wheelbase']
 
     downforce_name  = next(name for name, vec in forces if vec[2] != 0)
     total_downforce = solver.solution.report_definitions.force[downforce_name].compute()
-    rear_moment_val = solver.solution.report_definitions.moment["aero_balance_moment"].compute()
+    moment_coeff    = solver.solution.report_definitions.moment["aero_balance_moment"].compute()
+    rear_moment_val = moment_coeff * q  # CM * q (ref area = 1 m², ref length = 1 m)
 
     front_downforce = rear_moment_val / wheelbase
     rear_downforce  = total_downforce - front_downforce
