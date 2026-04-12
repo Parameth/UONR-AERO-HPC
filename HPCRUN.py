@@ -1,10 +1,13 @@
 import ansys.fluent.core as pyfluent
 import configparser
+import csv
 import json
 import os
 import shutil
-import subprocess
 from pathlib import Path
+
+import numpy as np
+from scipy.spatial import ConvexHull
 
 
 def load_config():
@@ -119,24 +122,51 @@ def add_force_report(solver, monitor, name, force_vec, zones):
 
 # --- Fluent Post helpers ---
 
+def calc_zy_projected_area(filepath: str) -> float:
+    """Read a Fluent ASCII surface export and return the ZY projected area
+    using the convex hull of the (y, z) node coordinates."""
+    yz_points = []
+    with open(filepath, newline='') as f:
+        reader  = csv.reader(f)
+        headers = [h.strip() for h in next(reader)]
+        y_idx   = headers.index('y-coordinate')
+        z_idx   = headers.index('z-coordinate')
+        for row in reader:
+            yz_points.append((float(row[y_idx]), float(row[z_idx])))
+
+    pts  = np.array(yz_points)
+    hull = ConvexHull(pts)
+    return hull.volume * 2  # scipy: volume = area in 2D; *2 for half-model symmetry
+
+
 def compute_aero_coefficients(solver, cfg, rho=1.225):
     velocity = cfg['velocity']
     zones    = cfg['zones']
     forces   = [tuple(f) for f in cfg['forces']]
     q        = 0.5 * rho * velocity**2
 
-    frontal_areas = []
+    all_surfaces = zones + list(cfg['wheels'].keys())
+
+    for s in all_surfaces:
+        solver.file.export.ascii(
+            file_name         = str(Path.cwd() / f"{s}_area_coords"),
+            surface_name_list = [s],
+            cell_func_domain  = ["z-coordinate", "y-coordinate"],
+        )
+
+    areas = {
+        s: calc_zy_projected_area(str(Path.cwd() / f"{s}_area_coords"))
+        for s in all_surfaces
+    }
+
+    frontal_areas = [(s, areas[s]) for s in all_surfaces]
     CL_list       = []
     CD_list       = []
     CS_list       = []
 
     for z in zones:
-        area = solver.results.report.projected_surface_area(
-            surfaces=[z], min_feature_size=0.001, proj_plane_norm_comp=[1, 0, 0]
-        )
-        frontal_areas.append((z, area))
-
-        zone_cl = zone_cd = zone_cs = None
+        area     = areas[z]
+        zone_cl  = zone_cd = zone_cs = None
 
         for force_name, force_vec in forces:
             report_name = f"{force_name}-{z}"
@@ -378,19 +408,13 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
     (out_dir / f"{sim_name}-results.txt").write_text(report)
 
 
-def move_results(solver, cfg):
+def save_results(solver, cfg):
     sim_name    = cfg['sim_name']
+    zones       = cfg['zones']
     out_dir     = Path.cwd() / sim_name
-    plots_dir   = out_dir / "plots"
     ensight_dir = out_dir / "ensight"
     out_dir.mkdir(exist_ok=True)
-    plots_dir.mkdir(exist_ok=True)
     ensight_dir.mkdir(exist_ok=True)
-    graphics = solver.results.graphics
-    monitor  = solver.solution.monitor
-
-    for out_file in Path.cwd().glob("*.out"):
-        shutil.move(str(out_file), str(out_dir / out_file.name))
 
     solver.file.write(file_type="case", file_name=str(out_dir / f"{sim_name}-1k.cas"))
     solver.file.write(file_type="data", file_name=str(out_dir / f"{sim_name}-1k.dat"))
@@ -400,6 +424,27 @@ def move_results(solver, cfg):
         cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag'],
         file_name=str(out_dir / sim_name),
     )
+
+    for z in zones:
+        export_path = str(Path.cwd() / f"{z}_area_coords")
+        solver.file.export.ascii(
+            file_name          = export_path,
+            surface_name_list  = [z],
+            cell_func_domain   = ["z-coordinate", "y-coordinate"],
+        )
+
+
+def move_results(solver, cfg):
+    sim_name    = cfg['sim_name']
+    out_dir     = Path.cwd() / sim_name
+    plots_dir   = out_dir / "plots"
+    out_dir.mkdir(exist_ok=True)
+    plots_dir.mkdir(exist_ok=True)
+    graphics = solver.results.graphics
+    monitor  = solver.solution.monitor
+
+    for out_file in Path.cwd().glob("*.out"):
+        shutil.move(str(out_file), str(out_dir / out_file.name))
 
     monitor.residual.plot()
     graphics.picture.save_picture(file_name=str(plots_dir / f"{sim_name}-residuals-plot.png"))
@@ -416,6 +461,7 @@ def main():
         setup_solver(solver, cfg)
         solver.solution.initialization.hybrid_initialize()
         solver.solution.run_calculation.iterate(iter_count=cfg['iterations'])
+        save_results(solver, cfg)
         frontal_areas, CL_list, CD_list, CS_list, front_df, rear_df, aero_bal = run_fluent_post(solver, cfg)
         results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_df, rear_df, aero_bal)
         move_results(solver, cfg)
