@@ -24,8 +24,11 @@ mode = ini.get('config', 'mode', fallback='operations')
 p    = 'debug_' if mode == 'debug' else ''
 pp   = f'{p}postpro'
 
-CASENAME = ini.get(f'{p}simulation', 'sim_name')
-FilePath = Path.cwd() / CASENAME / f"{CASENAME}.encas"
+initials = ini.get(f'{p}simulation', 'user_initials')
+sim_date = ini.get(f'{p}simulation', 'sim_date')
+sim_num  = ini.get(f'{p}simulation', 'sim_number')
+CASENAME = f"{initials}-{sim_date}-{sim_num}"
+FilePath = Path.cwd() / CASENAME / "ensight" / f"{CASENAME}.encas"
 
 print(f"[INIT] Case: {CASENAME}")
 print(f"[INIT] Case file: {FilePath}")
@@ -62,7 +65,7 @@ VTXMAG_CMIN = ini.getfloat(pp, 'vtxmag_cmin')
 VTXMAG_CMAX = ini.getfloat(pp, 'vtxmag_cmax')
 
 # Output folders
-PostProFolder = FilePath.parent / f"{CASENAME}_postpro"
+PostProFolder = FilePath.parent.parent / "Post-Pro"
 PostProFolder.mkdir(exist_ok=True)
 BI_Folder = PostProFolder / "Base_Images"
 BI_Folder.mkdir(exist_ok=True)

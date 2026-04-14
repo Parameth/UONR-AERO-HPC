@@ -30,6 +30,7 @@ source ansys/bin/activate
 pip install ansys.fluent.core
 pip install opencv-python	
 pip install tqdm
+pip install scipy
  
 source ansys/bin/activate
 python HPCRUN.py > log_run 2>&1
