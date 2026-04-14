@@ -27,4 +27,6 @@ DeltaSourceHPC.py
 # Misc
 .claude
 New_Release.md
-.Mesh_Test/
+
+# Folders
+Mesh Test/
