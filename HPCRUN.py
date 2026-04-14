@@ -368,10 +368,7 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
         for i, z in enumerate(zones)
     )
     sum_area = sum(frontal_areas[i][1] for i in range(len(zones)))
-    sum_cl   = sum(CL_list[i][1] for i in range(len(zones)) if CL_list[i][1] is not None)
-    sum_cd   = sum(CD_list[i][1] for i in range(len(zones)) if CD_list[i][1] is not None)
-    sum_cs   = sum(CS_list[i][1] for i in range(len(zones)) if CS_list[i][1] is not None)
-    zone_total = f"  {'TOTAL':<12} | {sum_area:>9.4f} | {sum_cl:>8.4f} | {sum_cd:>8.4f} | {sum_cs:>8.4f}"
+    zone_total = f"  {'TOTAL':<12} | {sum_area:>9.4f} |"
 
     report = f"""\
 =======================================================
