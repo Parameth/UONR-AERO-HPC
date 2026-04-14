@@ -173,7 +173,8 @@ def compute_aero_coefficients(solver, cfg, rho=1.225):
 
         for force_name, force_vec in forces:
             report_name = f"{force_name}-{z}"
-            force_val   = solver.solution.report_definitions.force[report_name].compute()
+            result      = solver.solution.report_definitions.compute(report_defs=[report_name])
+            force_val   = result[0][report_name][0]
 
             if force_vec[2] != 0:    # Z component → Lift
                 zone_cl = force_val / (q * area)
@@ -325,8 +326,8 @@ def run_fluent_post(solver, cfg):
     wheelbase = cfg['wheelbase']
 
     downforce_name  = next(name for name, vec in forces if vec[2] != 0)
-    total_downforce = solver.solution.report_definitions.force[downforce_name].compute()
-    moment_coeff    = solver.solution.report_definitions.moment["aero_balance_moment"].compute()
+    total_downforce = solver.solution.report_definitions.compute(report_defs=[downforce_name])[0][downforce_name][0]
+    moment_coeff    = solver.solution.report_definitions.compute(report_defs=["aero_balance_moment"])[0]["aero_balance_moment"][0]
     rear_moment_val = moment_coeff * q  # CM * q (ref area = 1 m², ref length = 1 m)
 
     front_downforce = rear_moment_val / wheelbase
@@ -353,7 +354,7 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
     )
 
     total_forces = {
-        name: solver.solution.report_definitions.force[name].compute()
+        name: solver.solution.report_definitions.compute(report_defs=[name])[0][name][0]
         for name, _ in forces
     }
 
