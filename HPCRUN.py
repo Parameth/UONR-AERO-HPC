@@ -245,7 +245,7 @@ def save_results(solver, cfg):
 
     solver.file.export.ensight_gold(
         cellzones=['domain', 'mrf'],
-        cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag'],
+        cell_func_domain_export=['pressure', 'total-pressure', 'vorticity-mag', 'skin-friction-coef'],
         file_name=str(out_dir / sim_name),
     )
 
