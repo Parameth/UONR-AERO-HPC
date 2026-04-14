@@ -25,10 +25,10 @@ Python & Bash
 
 Dependencies: see `requirements.txt`
 - `ansys-fluent-core` — PyFluent API for meshing & solving
-- `opencv-python`, `tqdm` — installed at runtime by `HPC_run.sh`
+- `opencv-python`, `tqdm`, `scipy` — installed at runtime by `HPC_run.sh`
 - ParaView `pvbatch` — post-processing (loaded via HPC module)
 
-**Version:** V1.2.0
+**Version:** V1.3.0
 
 ---
 
@@ -60,6 +60,7 @@ All run parameters live in `sim_config.ini`. The active profile is selected by `
 |---------|-----------------|
 | `[simulation]` | Simulation name, CAD file (`.pmdb`), mesh file (`.h5`) |
 | `[solver]` | Iterations, processor count, freestream velocity (m/s) |
+| `[vehicle]` | Vehicle geometry — tyre radius, wheelbase, moment reference centre |
 | `[zones]` | Aerodynamic zones used for force reporting (e.g. `chassis`, `fw`, `rw`) |
 | `[forces]` | Force monitor definitions (down-force, drag-force, side-force) |
 | `[surface_mesh_global]` | Global min/max surface mesh size (mm) |
@@ -85,6 +86,10 @@ Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_s
 - **Boundary layer generation** — named BL controls with configurable first layer height, layer count, offset method, and transition ratio
 - **Boundary condition setup** — velocity inlet, shear walls, moving ground plane, and rotating wheel walls (per-wheel axis origin, direction, and omega)
 - **Force & flux monitors** — drag/lift/side-force report definitions and residual/flux monitors, globally and split per zone
+- **Aero balance** — moment report (`aero_balance_moment`) at configurable moment centre; derives front/rear downforce split and % aero balance
+- **ZY projected area via ConvexHull** — frontal area computed from Fluent ASCII surface exports using `scipy.spatial.ConvexHull` (×2 for half-model symmetry); avoids PyFluent API limitations
+- **Results report** — per-zone CL/CD/CS breakdown, total forces, dynamic pressure, and aero balance written to `<sim_name>-results.txt`
+- **Skin friction export** — `skin-friction-coef` included in EnSight Gold cell function export alongside pressure and vorticity
 - **ParaView post-processing** — automated slice sweeps (X and Y planes) exporting Cp_total, Cp_static, and vorticity magnitude as `.png` sequences via `pvbatch`
 - **Solver hand-off** — switches from meshing to solver session in a single Fluent process (no intermediate file I/O)
 - **Safe teardown** — `try/finally` block ensures `solver.exit()` is always called
@@ -96,7 +101,9 @@ Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_s
 1. Clone/upload the repository files to the HPC
 2. Edit `sim_config.ini`:
    - Set `mode = operations` (or `debug` for a quick test run)
-   - Set `sim_name` and `CAD_file` under `[simulation]`
+   - Set `user_initials`, `sim_date`, `sim_number` under `[simulation]` — run name is assembled as `{initials}-{date}-{num}`
+   - Set `CAD_file` under `[simulation]`
+   - Set `tyre_radius`, `wheelbase`, `moment_center` under `[vehicle]`
 3. Submit the job:
    ```bash
    sbatch HPC_run.sh
@@ -131,51 +138,4 @@ Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_s
 
 ---
 
-## New Releases
-
----
-
-### V1.2.0 — 04/04/26
-
-#### MRF & Wheel Rotation
-- Added MRF wheel internals support — rotating zone definitions via `[mrf-zones]` config section
-- Added per-wheel wall rotation boundary conditions (axis origin, direction, and omega)
-- Added `Wheels_MRF` debug/test simulation configs for MRF validation
-
-#### Post-Processing
-- Expanded `[postpro]` config — configurable slice sweep ranges and colour map limits for Cp/vorticity
-
-#### Configuration
-- Extended `sim_config.ini` with `debug_` profile mirroring for all key sections
-
----
-
-### V1.1.0
-
-#### MRF Solver
-- MRF meshing and solving pipeline fully functional
-- Added MRF function and config options via `[mrf-zones]`
-- Solver hand-off from meshing to solver session within a single Fluent process (no intermediate file I/O)
-
----
-
-### V1.0.0 — Initial Release
-
-#### Pipeline
-- End-to-end SLURM pipeline: geometry import → watertight meshing → Fluent solve
-- `HPC_run.sh` SLURM job script with module loading and virtual environment setup
-- INI-based configuration via `sim_config.ini` supporting `operations` and `debug` profiles
-
-#### Meshing
-- Automated watertight geometry workflow (surface mesh, volume mesh, surface mesh improvement)
-- Boundary layer generation with configurable first layer height, layer count, and transition ratio
-- Body of Influence (BOI) refinement zones with bounding-box coordinates
-- Per-component local surface sizing controls
-
-#### Solver & Monitoring
-- Boundary condition setup — velocity inlet, shear walls, moving ground plane, rotating wheel walls
-- Force & flux monitors for drag, lift, and side-force globally and split per aero zone
-
----
-
-## Last Updated 04/04/26
+## Last Updated 14/04/26
