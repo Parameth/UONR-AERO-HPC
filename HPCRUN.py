@@ -311,7 +311,7 @@ def setup_solver(solver, cfg):
     solver.solution.report_definitions.moment["aero_balance_moment"] = {}
     rm = solver.solution.report_definitions.moment["aero_balance_moment"]
     rm.zones = zones
-    rm(mom_axis=[0, 1, 0])
+    rm(mom_axis=[0, -1, 0])
     rm(mom_center=cfg['moment_center'])
     rm(average_over=10)
     rm(retain_instantaneous_values=True)
@@ -348,10 +348,8 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
     out_dir  = Path.cwd() / sim_name
     out_dir.mkdir(exist_ok=True)
 
-    all_surfaces = zones + list(cfg['wheels'].keys())
-    total_area = solver.results.report.projected_surface_area(
-        surfaces=all_surfaces, min_feature_size=0.01, proj_plane_norm_comp=[1, 0, 0]
-    )
+    areas_by_zone = dict(frontal_areas)
+    total_area    = sum(areas_by_zone[z] for z in zones)
 
     total_forces = {
         name: solver.solution.report_definitions.compute(report_defs=[name])[0][name][0]
@@ -383,7 +381,7 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
   Velocity:    {velocity} m/s
   Iterations:  {cfg['iterations']}
   Zones:       {', '.join(zones)}
-  Air Density: {rho} kg/m³
+  Air Density: {rho} kg/m^3
   Dyn Press:   {q:.2f} Pa
 
 -------------------------------------------------------
@@ -394,10 +392,10 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
 -------------------------------------------------------
   PER-ZONE BREAKDOWN
 -------------------------------------------------------
-  {'Zone':<12} | {'Area (m²)':>9} | {'CL':>8} | {'CD':>8} | {'CS':>8}
-  {'─' * 52}
+  {'Zone':<12} | {'Area (m^2)':>9} | {'CL':>8} | {'CD':>8} | {'CS':>8}
+  {'-' * 52}
 {zone_rows}
-  {'─' * 52}
+  {'-' * 52}
 {zone_total}
 
 -------------------------------------------------------
@@ -409,7 +407,7 @@ def results_file(cfg, frontal_areas, CL_list, CD_list, CS_list, solver, front_do
 =======================================================
 """
 
-    (out_dir / f"{sim_name}-results.txt").write_text(report)
+    (out_dir / f"{sim_name}-results.txt").write_text(report, encoding='ascii')
 
 
 def save_results(solver, cfg):
