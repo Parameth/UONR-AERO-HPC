@@ -28,7 +28,7 @@ Dependencies: see `requirements.txt`
 - `opencv-python`, `tqdm`, `scipy` — installed at runtime by `HPC_run.sh`
 - ParaView `pvbatch` — post-processing (loaded via HPC module)
 
-**Version:** V1.3.0
+**Version:** V1.3.1
 
 ---
 
@@ -69,8 +69,8 @@ All run parameters live in `sim_config.ini`. The active profile is selected by `
 | `[boundary_layer_options]` | Boundary layer settings per region (first layer height, layer count, transition ratio) |
 | `[refinement_zones]` | Body of Influence (BOI) refinement boxes (coordinates in mm) |
 | `[postpro]` | ParaView settings — image resolution, slice sweep ranges, Cp/vorticity colour map limits |
-| `[mrf-zones]` | MRF rotating zone definitions (omega in rad/s, axis origin/direction) |
-| `[wheels]` | Wheel wall rotation settings (omega in rad/s, axis origin/direction) |
+| `[mrf-zones]` | MRF rotating zone definitions — axis origin/direction only; omega computed at runtime |
+| `[wheels]` | Wheel wall rotation settings — axis origin/direction only; omega computed at runtime |
 
 Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_solver]`).
 
@@ -84,7 +84,7 @@ Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_s
 - **Local surface sizing** — per-label sizing controls (min/max size, curvature angle, scope)
 - **Refinement box zones (BOI)** — bounding-box refinement regions with configurable coordinates and max cell size
 - **Boundary layer generation** — named BL controls with configurable first layer height, layer count, offset method, and transition ratio
-- **Boundary condition setup** — velocity inlet, shear walls, moving ground plane, and rotating wheel walls (per-wheel axis origin, direction, and omega)
+- **Boundary condition setup** — velocity inlet, shear walls, moving ground plane, and rotating wheel walls (per-wheel axis origin and direction; omega derived from `velocity / tyre_radius`)
 - **Force & flux monitors** — drag/lift/side-force report definitions and residual/flux monitors, globally and split per zone
 - **Aero balance** — moment report (`aero_balance_moment`) at configurable moment centre; derives front/rear downforce split and % aero balance
 - **ZY projected area via ConvexHull** — frontal area computed from Fluent ASCII surface exports using `scipy.spatial.ConvexHull` (×2 for half-model symmetry); avoids PyFluent API limitations
@@ -138,4 +138,4 @@ Debug profile sections use the same names prefixed with `debug_` (e.g. `[debug_s
 
 ---
 
-## Last Updated 14/04/26
+## Last Updated 15/04/26
