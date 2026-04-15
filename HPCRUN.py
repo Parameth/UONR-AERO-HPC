@@ -18,7 +18,7 @@ def load_config():
     sim_date = ini[f'{p}simulation']['sim_date']
     sim_num  = ini[f'{p}simulation']['sim_number']
     sim_name = f"{initials}-{sim_date}-{sim_num}"
-    return {
+    cfg = {
         'sim_name':             sim_name,
         'CAD_file':             ini[f'{p}simulation']['CAD_file'],
         'iterations':           ini.getint(f'{p}solver', 'iterations'),
@@ -46,6 +46,12 @@ def load_config():
         'wheelbase':                ini.getfloat(f'{p}vehicle', 'wheelbase'),
         'moment_center':            json.loads(ini[f'{p}vehicle']['moment_center']),
     }
+    omega = cfg['velocity'] / cfg['tyre_radius']
+    for zone in cfg['wheels'].values():
+        zone['omega'] = omega
+    for zone in cfg['mrf_zones'].values():
+        zone['omega'] = omega
+    return cfg
 
 
 # --- Meshing helpers ---
